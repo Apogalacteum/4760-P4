@@ -38,23 +38,33 @@ struct Clock
 	//incNan(){nan++;}
 };
 
-struct processControlBlock
-{
-	pid_t pid;
-	long state;
-	unsigned int totalCPUTime;
-	unsigned int totalSysTime;
-	unsigned int lastBurstTime;
-	int pPriority;
-}
 
 int main(){	
+	const unsigned int maxTimeBetweenNewProcsNS = 1000000;
+	const unsigned int maxTimeBetweenNewProcsSecs = 1;
+	int procCount = 0;
+	int lastProcNan = 0;
+	int lastProcSec = 0;
+	
 	shmid = shmget(key, sizeof(int*), 0666 | IPC_CREAT);
 	struct Clock *freshClock = (struct Clock *)shmat(shmid, (void*)0,0);
 	freshClock.sec = 0;
 	freshClock.nan = 0;
 
-	
+	while(procCount < 100)
+	{
+		if(freshClock.nan - lastProcNan >= maxTimeBetweenNewProcsNS && freshClock.sec - lastProcSec >= maxTimeBetweenNewProcsSecs)
+		{
+			if(cpid = fork())
+				break;
+			lastProcNan = freshClock.nan;
+			lastProcSec = freshClock.sec;
+			procCount++;
+		} 
+	}
+
+	if(cpid != 0)
+		execl userP;
 
 	return 0;
 }
